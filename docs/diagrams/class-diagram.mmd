@@ -1,0 +1,57 @@
+classDiagram
+    direction LR
+    class Plan {
+      String planId
+      BigDecimal individualDeductible
+      BigDecimal familyDeductible
+      Map~CoverageKey,CoverageRule~ rules
+      ruleFor(main, sub) Optional~CoverageRule~
+    }
+    class Member {
+      long policyHolderId
+      long policyId
+      String planId
+      LocalDate coverageStart
+      LocalDate coverageEnd
+      isCoveredOn(date) boolean
+    }
+    class Accumulator {
+      long ownerId
+      AccumulatorScope scope
+      int benefitYear
+      BigDecimal amount
+      add(BigDecimal) Accumulator
+    }
+    class CoverageRule {
+      <<sealed interface>>
+      ruleText() String
+      split(billed, status) Split
+    }
+    class PercentAfterDeductibleRule { BigDecimal planPercent }
+    class NoChargeRule
+    class FlatAmountRule { BigDecimal planAmount }
+    class Claim {
+      long lineNo
+      String policyHolderId
+      String billedAmount
+    }
+    class AdjudicationResult {
+      BigDecimal memberPays
+      BigDecimal planPays
+      String ruleUsed
+      ErrorCode errorCode
+    }
+    class ClaimAdjudicator { adjudicate(Claim) AdjudicationResult }
+    class DeductibleService { status(plan, ind, fam) DeductibleStatus }
+    class ClaimValidator { validate(Claim) Optional~ErrorCode~ }
+
+    Plan "1" --> "*" CoverageRule : rules
+    CoverageRule <|.. PercentAfterDeductibleRule
+    CoverageRule <|.. NoChargeRule
+    CoverageRule <|.. FlatAmountRule
+    Member --> Plan : enrolled in
+    Member --> Accumulator : totals per year
+    AdjudicationResult --> Claim : wraps
+    ClaimAdjudicator ..> ClaimValidator
+    ClaimAdjudicator ..> DeductibleService
+    ClaimAdjudicator --> AdjudicationResult : produces
