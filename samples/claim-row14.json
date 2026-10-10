@@ -1,0 +1,10 @@
+{
+  "policyId": "100001",
+  "policyHolderId": "1000012",
+  "dateOfService": "2016-08-09",
+  "mainCategory": "Prescription Drugs",
+  "subCategory": "GENERIC",
+  "billedAmount": "240.60",
+  "individualAccumulated": 467.60,
+  "familyAccumulated": 12000.00
+}

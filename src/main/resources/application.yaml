@@ -1,3 +1,38 @@
 spring:
   application:
     name: Claims Processing System
+  datasource:
+    # In-memory H2 holds the Spring Batch job repository for the demo. Production: Oracle (ADR 0004).
+    url: jdbc:h2:mem:claims;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  batch:
+    job:
+      enabled: false           # never auto-run the job at start-up; the CLI and GUI start it
+    jdbc:
+      initialize-schema: always  # create the BATCH_* tables in H2
+  h2:
+    console:
+      enabled: true            # http://localhost:8080/h2-console  (JDBC URL above, user sa)
+  mvc:
+    problemdetails:
+      enabled: true            # RFC 9457 error bodies for invalid requests
+
+claims:
+  processing-date: 2016-12-31  # "today" for the future-dated check (assumption A11)
+  benefit-year: 2016           # accumulators exist for 2016 only (assumption A10)
+  chunk-size: 1000
+  refdata:
+    plans: classpath:refdata/plans.csv
+    coverage: classpath:refdata/coverage.csv
+    policies: classpath:refdata/policies.csv
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.claims: INFO

@@ -22,9 +22,9 @@
 
 | Phase | What | Done when |
 | --- | --- | --- |
-| 1 | Spring Boot jar, H2, single-threaded batch | All three doors demo on laptop |
-| 2 | Docker multi-stage image + docker-compose (app + DB) | `docker compose up` runs the demo |
-| 3 | Kubernetes (only if uptime requires): API Deployment + HPA, batch CronJob | — |
+| 1 | Spring Boot jar, H2, single-threaded batch | All three doors demo on laptop · **built**, pending `mvnw verify` on my machine |
+| 2 | Docker multi-stage image + docker-compose (app + DB) | `docker compose up` runs the demo · not started |
+| 3 | Kubernetes (only if uptime requires): API Deployment + HPA, batch CronJob | — · design only |
 
 Public cloud (AWS): EKS, RDS (Oracle / Aurora PostgreSQL), S3 for files, Secrets Manager, OpenTelemetry + Grafana.
 
@@ -37,4 +37,13 @@ Public cloud (AWS): EKS, RDS (Oracle / Aurora PostgreSQL), S3 for files, Secrets
 | Observability | Micrometer metrics, structured logs with correlation ID |
 | Extensibility | New rule = new `CoverageRule` class; plans/rules are data |
 
-TODO (you): record what you actually built vs what stays a design proposal.
+## Built vs proposed
+
+| Item | Status |
+| --- | --- |
+| Single-threaded chunk step, chunk size configurable (`claims.chunk-size`) | Built |
+| Restartable job metadata (Spring Batch JDBC repository, H2) | Built |
+| Fresh accumulator store per run, in memory | Built (ADR 0007) |
+| Partitioning by PolicyId, staging table, `ORDER BY seq` export | Proposed |
+| Accumulators in Oracle with a row lock per family; accumulator ledger | Proposed |
+| Docker image and compose file | Next step |

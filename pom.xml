@@ -27,7 +27,8 @@
         <url/>
     </scm>
     <properties>
-        <java.version>27</java.version>
+        <!-- 21 (LTS). 27 was an early-access JDK: IntelliJ hid "Record" and the installed JDK is 21. See docs/dev-log.md -->
+        <java.version>21</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -58,6 +59,11 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator-test</artifactId>
             <scope>test</scope>
         </dependency>
@@ -79,6 +85,8 @@
     </dependencies>
 
     <build>
+        <!-- target/claims.jar, so the run commands in README.md stay short -->
+        <finalName>claims</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

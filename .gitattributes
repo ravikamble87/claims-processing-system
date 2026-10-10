@@ -1,2 +1,22 @@
-/mvnw text eol=lf
-*.cmd text eol=crlf
+# Let Git normalise line endings for text files
+* text=auto
+
+# Must stay LF: run on Linux (Docker, CI)
+/mvnw          text eol=lf
+*.sh           text eol=lf
+Dockerfile     text eol=lf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+
+# Must stay CRLF: run on Windows
+*.cmd          text eol=crlf
+*.bat          text eol=crlf
+
+# Data files: LF so the output comparison is identical on every OS
+*.csv          text eol=lf
+
+# Never touch binary files
+*.png          binary
+*.jar          binary
+*.xlsx         binary
+*.docx         binary

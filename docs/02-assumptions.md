@@ -33,6 +33,16 @@ The assignment states it contains intentional ambiguities. Each one below is res
 | A19 | No claim ID, so no duplicate detection | Cannot tell repeat visit from copy | — |
 | A20 | Premium, copay, OOP max, networks not modelled | Not in the rules | — |
 
+## Added while implementing
+
+| # | Assumption | Why | Tested by |
+| --- | --- | --- | --- |
+| A21 | REST returns 200 for a processed claim, 422 for a claim rejected by a business rule (body carries the error code), 400 for a malformed request | Lets callers tell "your request is broken" from "the claim is not payable" | TODO |
+| A22 | GUI file paths are paths on the machine running the application | The assignment asks for input and output paths, and the demo runs locally; a hosted version would upload files instead | TODO |
+| A23 | Output file: same 14 columns and header as SampleTransactionsProcessed; input columns echoed as received; amounts with 2 decimals; UTF-8, LF line endings | Output compares byte-for-byte with the expected file on any OS | TODO |
+| A24 | Every batch run starts from the PolicyData opening accumulators; runs do not affect each other; GUI runs queue one at a time | Re-running the same file gives the same answer (ADR 0007) | TODO |
+| A25 | Ids must be positive whole numbers; amounts may have at most 2 decimals | "250.505" or "-5" in an id are data errors (E0006), not values to round | TODO |
+
 TODO (you): add every new assumption you make while coding, the day you make it.
 
 ## Error codes

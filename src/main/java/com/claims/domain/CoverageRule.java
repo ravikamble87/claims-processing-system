@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 /**
  * One coverage rule from the PlanCoverage tab. Exactly three kinds exist, so the interface is sealed:
- * the compiler then forces every switch overrule types to handle all three.
+ * the compiler then forces every switch over rule types to handle all three.
  */
 public sealed interface CoverageRule
         permits PercentAfterDeductibleRule, NoChargeRule, FlatAmountRule {

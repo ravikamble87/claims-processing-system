@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claims Processing</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1d2433; --quiet: #5d6678; --line: #dde1e8;
+    --accent: #2457c5; --accent-ink: #ffffff; --good: #1f7a4d; --bad: #b42318; --warn: #a15c07;
+    --tint: #eef3fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b2029; --ink: #e7eaf0; --quiet: #9aa3b5; --line: #2c3340;
+      --accent: #6e9bff; --accent-ink: #0d1117; --good: #4cc38a; --bad: #ff7b72; --warn: #e3a341;
+      --tint: #1f2a40;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 28px 24px 8px; max-width: 1040px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 4px 0 0; color: var(--quiet); }
+  main { max-width: 1040px; margin: 0 auto; padding: 16px 24px 48px; display: grid; gap: 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  h2 { margin: 0 0 4px; font-size: 18px; }
+  .sub { margin: 0 0 16px; color: var(--quiet); font-size: 14px; }
+  label { display: block; font-size: 13px; color: var(--quiet); margin-bottom: 4px; }
+  input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px;
+          background: var(--bg); color: var(--ink); font: inherit; }
+  .row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  button { padding: 10px 18px; border: 0; border-radius: 6px; background: var(--accent);
+           color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { margin-top: 16px; display: flex; gap: 12px; align-items: center; min-height: 28px; }
+  .pill { padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--tint); }
+  .pill.COMPLETED { color: var(--good); } .pill.FAILED { color: var(--bad); }
+  .pill.RUNNING, .pill.QUEUED { color: var(--warn); }
+  .bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 30%; background: var(--accent); animation: slide 1.1s infinite; }
+  @keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+  .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 16px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .tile b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .tile small { color: var(--quiet); }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--quiet); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .msg { margin-top: 12px; color: var(--quiet); font-size: 14px; word-break: break-all; }
+  .err { color: var(--bad); }
+  .result { margin-top: 16px; }
+  .hidden { display: none; }
+  @media (max-width: 760px) {
+    .row, .grid4 { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Claims Processing</h1>
+  <p>ABC Health Insurance · plans P001–P003 · benefit year 2016</p>
+</header>
+<main>
+  <section>
+    <h2>Process a claims file</h2>
+    <p class="sub">Paths are on the machine running this application. Relative paths start from its working folder.</p>
+    <div class="row">
+      <div><label for="in">Input transaction file (CSV)</label>
+        <input id="in" value="samples/SampleTransactions.csv"></div>
+      <div><label for="out">Output file (CSV)</label>
+        <input id="out" value="target/ProcessedTransactions.csv"></div>
+      <button id="run">Process</button>
+    </div>
+    <div class="status"><span id="pill" class="pill hidden"></span><div id="bar" class="bar hidden"><span></span></div></div>
+    <div id="tiles" class="tiles hidden">
+      <div class="tile"><b id="t-rows">0</b><small>Rows</small></div>
+      <div class="tile"><b id="t-ok">0</b><small>Processed</small></div>
+      <div class="tile"><b id="t-err">0</b><small>Errors</small></div>
+      <div class="tile"><b id="t-billed">0.00</b><small>Total billed $</small></div>
+      <div class="tile"><b id="t-plan">0.00</b><small>Plan paid $</small></div>
+      <div class="tile"><b id="t-member">0.00</b><small>Member paid $</small></div>
+    </div>
+    <table id="errors" class="hidden"><thead><tr><th>Error code</th><th class="num">Rows</th></tr></thead><tbody></tbody></table>
+    <div id="runmsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2>Adjudicate one claim (REST API)</h2>
+    <p class="sub">Calls <code>POST /api/v1/claims/adjudicate</code>. Pre-filled with sample row 14 (family deductible met).</p>
+    <div class="grid4">
+      <div><label for="c-policy">Policy Id</label><input id="c-policy" value="100001"></div>
+      <div><label for="c-member">Policy holder Id</label><input id="c-member" value="1000012"></div>
+      <div><label for="c-date">Date of service</label><input id="c-date" value="2016-08-09"></div>
+      <div><label for="c-amount">Billed amount</label><input id="c-amount" value="240.60"></div>
+      <div><label for="c-main">Main category</label><input id="c-main" value="Prescription Drugs"></div>
+      <div><label for="c-sub">Sub category</label><input id="c-sub" value="GENERIC"></div>
+      <div><label for="c-ind">Individual accumulated</label><input id="c-ind" value="467.60"></div>
+      <div><label for="c-fam">Family accumulated</label><input id="c-fam" value="12000.00"></div>
+    </div>
+    <div class="status"><button id="adj">Adjudicate</button></div>
+    <table id="claimres" class="result hidden"><tbody></tbody></table>
+  </section>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const money = v => v == null ? '' : Number(v).toFixed(2);
+  let timer;
+
+  $('run').onclick = async () => {
+    clearInterval(timer);
+    $('runmsg').textContent = '';
+    $('run').disabled = true;
+    try {
+      const res = await fetch('/api/v1/jobs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputFile: $('in').value, outputFile: $('out').value })
+      });
+      const body = await res.json();
+      if (!res.ok) { throw new Error(body.detail || body.title || res.statusText); }
+      poll(body.runId);
+      timer = setInterval(() => poll(body.runId), 500);
+    } catch (e) {
+      $('runmsg').innerHTML = '<span class="err"></span>';
+      $('runmsg').firstChild.textContent = e.message;
+      $('run').disabled = false;
+    }
+  };
+
+  async function poll(runId) {
+    const s = await (await fetch('/api/v1/jobs/' + runId)).json();
+    $('pill').textContent = s.state; $('pill').className = 'pill ' + s.state;
+    const busy = s.state === 'QUEUED' || s.state === 'RUNNING';
+    $('bar').classList.toggle('hidden', !busy);
+    $('tiles').classList.remove('hidden');
+    $('t-rows').textContent = s.rows; $('t-ok').textContent = s.processed; $('t-err').textContent = s.errors;
+    $('t-billed').textContent = money(s.totalBilled); $('t-plan').textContent = money(s.planPaid);
+    $('t-member').textContent = money(s.memberPaid);
+    const codes = Object.entries(s.errorsByCode || {});
+    $('errors').classList.toggle('hidden', codes.length === 0);
+    const tbody = $('errors').querySelector('tbody'); tbody.innerHTML = '';
+    for (const [code, n] of codes) {
+      const tr = tbody.insertRow(); tr.insertCell().textContent = code;
+      const c = tr.insertCell(); c.textContent = n; c.className = 'num';
+    }
+    if (!busy) {
+      clearInterval(timer);
+      $('run').disabled = false;
+      $('runmsg').textContent = (s.message || '') + (s.state === 'COMPLETED' ? ' · output written to ' + s.outputFile : '');
+    }
+  }
+
+  $('adj').onclick = async () => {
+    const req = {
+      policyId: $('c-policy').value, policyHolderId: $('c-member').value, dateOfService: $('c-date').value,
+      mainCategory: $('c-main').value, subCategory: $('c-sub').value, billedAmount: $('c-amount').value,
+      individualAccumulated: Number($('c-ind').value), familyAccumulated: Number($('c-fam').value)
+    };
+    const res = await fetch('/api/v1/claims/adjudicate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req)
+    });
+    const body = await res.json();
+    const rows = body.errors || body.detail
+      ? [['HTTP status', res.status], ['Problem', body.detail || body.title]]
+      : [['HTTP status', res.status], ['Policy holder pays', money(body.policyHolderPays)],
+         ['Plan pays', money(body.planPays)], ['Rule used', body.ruleUsed],
+         ['Individual accumulated (after)', money(body.individualAccumulated)],
+         ['Family accumulated (after)', money(body.familyAccumulated)],
+         ['Error', body.errorCode ? body.errorCode + ' · ' + body.errorMessage : ''],
+         ['Message', body.processingMessage]];
+    const tbody = $('claimres').querySelector('tbody'); tbody.innerHTML = '';
+    for (const [k, v] of rows) {
+      if (v === '' || v == null) continue;
+      const tr = tbody.insertRow(); tr.insertCell().textContent = k; tr.insertCell().textContent = v;
+    }
+    $('claimres').classList.remove('hidden');
+  };
+</script>
+</body>
+</html>

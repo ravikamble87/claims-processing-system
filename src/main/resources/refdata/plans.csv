@@ -1,0 +1,4 @@
+planId,planName,coverageType,monthlyPremium,individualDeductible,familyDeductible
+P001,Bronze 6000/40%/HAS,Family,962.00,6000.00,12000.00
+P002,Bronze 5000/50,Family,1017.00,5000.00,10000.00
+P003,Bronze 4000/20,Family,1045.67,4000.00,8000.00
